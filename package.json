@@ -1,0 +1,36 @@
+{
+  "name": "task_api",
+  "version": "1.0.0",
+  "description": "Simple Task API with PostgreSQL",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "docker:build": "docker build -t task-api .",
+    "docker:run": "docker run -p 3000:3000 --env-file .env.keys task-api",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:rebuild": "docker-compose up -d --build",
+    "docker:clean": "docker-compose down -v --rmi all"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.16.3",
+    "express": "^4.19.2",
+    "@dotenvx/dotenvx": "^1.20.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "nodemon": "^3.1.4",
+    "prisma": "^6.16.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}

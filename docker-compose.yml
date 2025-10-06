@@ -1,0 +1,78 @@
+services:
+  # PostgreSQL Database Service
+  database:
+    image: postgres:15-alpine
+    container_name: task_api_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: task_api
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      # Persist database data
+      - postgres_data:/var/lib/postgresql/data
+      # Optional: Custom initialization scripts
+      # - ./init-scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - task_api_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d task_api"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Node.js Application Service
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: task_api_app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:root@database:5432/task_api
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    networks:
+      - task_api_network
+    depends_on:
+      database:
+        condition: service_healthy
+    volumes:
+      # Mount for development (optional - remove in production)
+      - .env.keys:/app/.env.keys:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: Database Administration Tool
+  adminer:
+    image: adminer:4.8.1
+    container_name: task_api_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - task_api_network
+    depends_on:
+      - database
+    environment:
+      ADMINER_DEFAULT_SERVER: database
+
+# Named Volumes for Data Persistence
+volumes:
+  postgres_data:
+    driver: local
+
+# Custom Network for Service Communication
+networks:
+  task_api_network:
+    driver: bridge
