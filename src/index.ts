@@ -1,5 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
+import taskRouter from './modules/task/routes';
+import { swaggerDocs } from './config/swagger';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -7,6 +9,7 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
+swaggerDocs(app);
 
 // Hello World route
 app.get('/', (req, res) => {
@@ -38,19 +41,12 @@ app.get('/health', async (req, res) => {
 });
 
 // Simple users route (future expansion)
-app.get('/users', async (req, res) => {
-  try {
-    const users = await prisma.user.findMany();
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ 
-      error: 'Failed to fetch users',
-      details: error instanceof Error ? error.message : 'Unknown error'
-    });
-  }
-});
+
+app.use('/api/tasks', taskRouter)
+
 
 // Start server
+
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
