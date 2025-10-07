@@ -328,7 +328,7 @@ Contributions are welcome! Please follow these steps:
 **Dipesh Basnet**
 
 - GitHub: [@bdipesh](https://github.com/bdipesh)
-- LinkedIn: [Your LinkedIn Profile](https://linkedin.com/in/bdipesh)
+- LinkedIn: [Connect in LinkedIn](https://linkedin.com/in/bdipesh)
 
 ## 🙏 Acknowledgments
 
