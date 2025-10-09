@@ -1,20 +1,33 @@
 import { Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma, { isPrismaInitError } from '../../lib/prisma';
 import { AuthRequest } from '../../middleware/auth';
-const prisma = new PrismaClient();
 
 export async function getTasks(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
-  const tasks = await prisma.task.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
-  res.json(tasks);
+  try {
+    const tasks = await prisma.task.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+    res.json(tasks);
+  } catch (err) {
+    if (isPrismaInitError(err) || (err as any)?.message?.includes("Can't reach database server")) {
+      return res.status(503).json({ error: 'Database is unavailable. Please try again later.' });
+    }
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 export async function createTask(req: AuthRequest, res: Response) {
   const userId = req.user!.id;
   const { title, description } = req.body;
   if (!title) return res.status(400).json({ error: 'Title is required' });
-  const task = await prisma.task.create({ data: { title, description, userId } });
-  res.status(201).json(task);
+  try {
+    const task = await prisma.task.create({ data: { title, description, userId } });
+    res.status(201).json(task);
+  } catch (err) {
+    if (isPrismaInitError(err) || (err as any)?.message?.includes("Can't reach database server")) {
+      return res.status(503).json({ error: 'Database is unavailable. Please try again later.' });
+    }
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 export async function updateTask(req: AuthRequest, res: Response) {
@@ -27,7 +40,10 @@ export async function updateTask(req: AuthRequest, res: Response) {
       data: { title, description, completed },
     });
     res.json(updated);
-  } catch {
+  } catch (err) {
+    if (isPrismaInitError(err) || (err as any)?.message?.includes("Can't reach database server")) {
+      return res.status(503).json({ error: 'Database is unavailable. Please try again later.' });
+    }
     res.status(404).json({ error: 'Task not found' });
   }
 }
@@ -38,7 +54,10 @@ export async function deleteTask(req: AuthRequest, res: Response) {
   try {
     const deleted = await prisma.task.delete({ where: { id, userId } as any });
     res.json(deleted);
-  } catch {
+  } catch (err) {
+    if (isPrismaInitError(err) || (err as any)?.message?.includes("Can't reach database server")) {
+      return res.status(503).json({ error: 'Database is unavailable. Please try again later.' });
+    }
     res.status(404).json({ error: 'Task not found' });
   }
 }
