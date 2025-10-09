@@ -8,14 +8,17 @@ WORKDIR /app
 
 # Copy package files first (for better Docker layer caching)
 COPY package*.json ./
+# Ensure Prisma schema is available for postinstall (prisma generate)
+COPY prisma ./prisma
 
 # Install all dependencies (including devDependencies for building)
+# postinstall runs `prisma generate`, which requires prisma/schema.prisma
 RUN npm ci --only=production=false
 
-# Copy source code
+# Copy remaining source code
 COPY . .
 
-# Generate Prisma client
+# Generate Prisma client explicitly (harmless if already generated via postinstall)
 RUN npx prisma generate
 
 # Build the TypeScript application
@@ -31,15 +34,17 @@ RUN adduser -S nodejs -u 1001
 # Set working directory
 WORKDIR /app
 
+# Copy Prisma schema before installing deps so postinstall (prisma generate) can find it
+COPY --from=builder /app/prisma ./prisma
 # Copy package files
 COPY package*.json ./
 
 # Install only production dependencies
+# postinstall runs `prisma generate`, which requires prisma/schema.prisma
 RUN npm ci --only=production && npm cache clean --force
 
 # Copy built application from builder stage
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
 # Copy environment files
