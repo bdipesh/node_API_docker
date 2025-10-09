@@ -11,10 +11,25 @@ const options: swaggerJsdoc.Options = {
       description: 'API documentation for Task API with Auth, Users, and Tasks',
     },
     servers: [
+      // Relative path works well behind proxies and different hosts (e.g., Retool)
+      {
+        url: '/api',
+        description: 'Relative server (use current host)',
+      },
+      // Local development convenience
       {
         url: 'http://localhost:3000/api',
-        description: 'Development server',
+        description: 'Local development server',
       },
+      // Optional base URL via env when deployed
+      ...(process.env.BASE_URL
+        ? [
+            {
+              url: `${process.env.BASE_URL.replace(/\/$/, '')}/api`,
+              description: 'Environment BASE_URL server',
+            },
+          ]
+        : []),
     ],
     components: {
       securitySchemes: {
@@ -33,6 +48,11 @@ const options: swaggerJsdoc.Options = {
 const swaggerSpec = swaggerJsdoc(options);
 
 export const swaggerDocs = (app: Express) => {
+  // Human-friendly UI
   app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+  // Machine-readable JSON for Retool and other clients
+  app.get('/docs.json', (_req, res) => res.json(swaggerSpec));
+  app.get('/openapi.json', (_req, res) => res.json(swaggerSpec));
   console.log('✅ Swagger Docs available at http://localhost:3000/docs');
+  console.log('✅ OpenAPI JSON available at http://localhost:3000/docs.json');
 };
