@@ -23,7 +23,9 @@
   "dependencies": {
     "@dotenvx/dotenvx": "^1.20.0",
     "@prisma/client": "^6.16.3",
+    "cors": "^2.8.5",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
   },

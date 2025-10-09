@@ -2,12 +2,14 @@ import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import taskRouter from './modules/task/routes';
 import { swaggerDocs } from './config/swagger';
+const cors = require('cors');
 
 const app = express();
 const prisma = new PrismaClient();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 swaggerDocs(app);
 
