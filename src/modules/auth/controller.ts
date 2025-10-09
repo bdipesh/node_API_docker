@@ -1,12 +1,23 @@
 import { Request, Response } from 'express';
+import { Prisma } from '@prisma/client';
 import { generateAccessToken, generateRefreshToken } from '../../services/token';
 import prisma, { isPrismaInitError } from '../../lib/prisma';
 
 export const registerUser = async (req: Request, res: Response) => {
-  const { name, email, password }: { name?: string; email?: string; password?: string } = req.body || {};
+  const body = req.body || {};
+  let name = body?.name;
+  let email = body?.email;
+  let password = body?.password;
+
+  // Coerce primitives to strings and trim
+  if (name !== undefined) name = String(name).trim();
+  if (email !== undefined) email = String(email).trim().toLowerCase();
+  if (password !== undefined) password = String(password);
+
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Name, email and password are required' });
   }
+
   try {
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) {
@@ -17,9 +28,19 @@ export const registerUser = async (req: Request, res: Response) => {
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
     return res.status(201).json({ user: { id: user.id, name: user.name, email: user.email }, accessToken, refreshToken });
-  } catch (err) {
-    if (isPrismaInitError(err) || (err as any)?.message?.includes("Can't reach database server")) {
+  } catch (err: any) {
+    if (isPrismaInitError(err) || err?.message?.includes("Can't reach database server")) {
       return res.status(503).json({ error: 'Database is unavailable. Please try again later.' });
+    }
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      // Unique constraint
+      if (err.code === 'P2002') {
+        return res.status(409).json({ error: 'Email already in use' });
+      }
+      // Missing table/column (e.g., migrations not applied)
+      if (err.code === 'P2021' || err.code === 'P2022') {
+        return res.status(503).json({ error: 'Database schema is not ready. Please try again in a moment.' });
+      }
     }
     return res.status(500).json({ error: 'Internal server error' });
   }
