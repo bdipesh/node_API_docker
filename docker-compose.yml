@@ -5,9 +5,9 @@ services:
     container_name: task_api_db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: task_api
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: root
+      POSTGRES_DB: task_db_crbx
+      POSTGRES_USER: task_db_crbx_user
+      POSTGRES_PASSWORD: ZumbfBIt41zMaGJkkQVfz05xNr0KKkj1
       PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       # Persist database data
@@ -26,7 +26,7 @@ services:
 
   # Node.js Application Service
   app:
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile
       target: production
