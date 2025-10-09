@@ -1,6 +1,11 @@
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
 import { Express } from 'express';
+import path from 'path';
+
+// Build globs that work in both dev (ts-node) and prod (compiled JS in dist)
+const distGlob = path.resolve(__dirname, '../modules/**/routes.js');
+const srcGlob = path.resolve(__dirname, '../../src/modules/**/routes.ts');
 
 const options: swaggerJsdoc.Options = {
   definition: {
@@ -41,8 +46,8 @@ const options: swaggerJsdoc.Options = {
       },
     },
   },
-  // path to files that contain OpenAPI definitions (use your module routes)
-  apis: ['./src/modules/**/routes.ts'],
+  // Paths to files that contain OpenAPI definitions (TS in dev, JS in prod)
+  apis: [srcGlob, distGlob],
 };
 
 const swaggerSpec = swaggerJsdoc(options);
