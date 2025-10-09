@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getTasks, createTask, updateTask, deleteTask } from './controller';
+import { authenticate } from '../../middleware/auth';
 
 const router = Router();
 /**
@@ -23,7 +24,7 @@ const router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get('/', getTasks);
+router.get('/', authenticate, getTasks);
 /**
  * @swagger
  * /tasks:
@@ -44,15 +45,17 @@ router.get('/', getTasks);
  *               title:
  *                 type: string
  *                 example: Finish TypeScript backend
+ *               description:
+ *                 type: string
  *     responses:
  *       201:
  *         description: Task created successfully
  *       401:
  *         description: Unauthorized
  */
-router.post('/', createTask);
+router.post('/', authenticate, createTask);
 
-router.put('/:id', updateTask);
-router.delete('/:id', deleteTask);
+router.put('/:id', authenticate, updateTask);
+router.delete('/:id', authenticate, deleteTask);
 
 export default router;

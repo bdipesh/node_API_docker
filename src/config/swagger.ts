@@ -6,9 +6,9 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Fullstack API',
+      title: 'Task API',
       version: '1.0.0',
-      description: 'API documentation for our Node + Prisma backend',
+      description: 'API documentation for Task API with Auth, Users, and Tasks',
     },
     servers: [
       {
@@ -16,6 +16,15 @@ const options: swaggerJsdoc.Options = {
         description: 'Development server',
       },
     ],
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
   },
   // path to files that contain OpenAPI definitions (use your module routes)
   apis: ['./src/modules/**/routes.ts'],

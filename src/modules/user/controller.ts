@@ -1,39 +1,46 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+
 const prisma = new PrismaClient();
 
-export async function getTasks(req: Request, res: Response) {
-  const tasks = await prisma.task.findMany({ orderBy: { createdAt: 'desc' } });
-  res.json(tasks);
+export async function listUsers(req: Request, res: Response) {
+  const users = await prisma.user.findMany({ select: { id: true, name: true, email: true, createdAt: true, updatedAt: true } });
+  res.json(users);
 }
 
-export async function createTask(req: Request, res: Response) {
-  const { title, description } = req.body;
-  if (!title) return res.status(400).json({ error: 'Title is required' });
-  const task = await prisma.task.create({ data: { title, description } });
-  res.status(201).json(task);
-}
-
-export async function updateTask(req: Request, res: Response) {
+export async function getUser(req: Request, res: Response) {
   const id = Number(req.params.id);
-  const { title, description, completed } = req.body;
+  const user = await prisma.user.findUnique({ where: { id }, select: { id: true, name: true, email: true, createdAt: true, updatedAt: true } });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(user);
+}
+
+export async function createUser(req: Request, res: Response) {
+  const { name, email, password } = req.body || {};
+  if (!name || !email || !password) return res.status(400).json({ error: 'Name, email, password are required' });
+  const exists = await prisma.user.findUnique({ where: { email } });
+  if (exists) return res.status(409).json({ error: 'Email already in use' });
+  const user = await prisma.user.create({ data: { name, email, password }, select: { id: true, name: true, email: true, createdAt: true, updatedAt: true } });
+  res.status(201).json(user);
+}
+
+export async function updateUser(req: Request, res: Response) {
+  const id = Number(req.params.id);
+  const { name, email, password } = req.body || {};
   try {
-    const updated = await prisma.task.update({
-      where: { id },
-      data: { title, description, completed },
-    });
+    const updated = await prisma.user.update({ where: { id }, data: { name, email, password }, select: { id: true, name: true, email: true, createdAt: true, updatedAt: true } });
     res.json(updated);
   } catch {
-    res.status(404).json({ error: 'Task not found' });
+    res.status(404).json({ error: 'User not found' });
   }
 }
 
-export async function deleteTask(req: Request, res: Response) {
+export async function deleteUser(req: Request, res: Response) {
   const id = Number(req.params.id);
   try {
-    const deleted = await prisma.task.delete({ where: { id } });
+    const deleted = await prisma.user.delete({ where: { id }, select: { id: true, name: true, email: true } });
     res.json(deleted);
   } catch {
-    res.status(404).json({ error: 'Task not found' });
+    res.status(404).json({ error: 'User not found' });
   }
 }

@@ -5,19 +5,22 @@ export interface AuthRequest extends Request {
   user?: { id: number; email: string };
 }
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: 'Missing token' });
+export function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
 
-  const token = authHeader.split(' ')[1];
-  try {
-    const decoded = verifyAccessToken(token) as { id: number; email: string };
-    req.user = decoded;
-    next();
-  } catch (error: any) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ error: 'Access token expired' });
-    }
-    return res.status(401).json({ error: 'Invalid token' });
+  if (!token) {
+    return res.status(401).json({ error: 'Missing Authorization header' });
   }
-};
+
+  try {
+    const decoded = verifyAccessToken(token) as any;
+    if (!decoded || typeof decoded !== 'object' || decoded.id == null) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+    req.user = { id: decoded.id, email: decoded.email };
+    next();
+  } catch (e) {
+    return res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}
